@@ -1,4 +1,4 @@
-// M4: lightweight local persistence (SQLite via better-sqlite3).
+// Lightweight local persistence (SQLite via better-sqlite3).
 // Schemaless-ish: every entity is a JSON `data` blob in one `records` table,
 // tagged by feature + entity. Works for any feature without per-model DDL.
 
@@ -38,6 +38,9 @@ const toRecord = (row: Row): StoredRecord => ({
   data: JSON.parse(row.data) as Record<string, unknown>,
   createdAt: row.created_at,
 });
+
+const getRow = (id: string): Row | undefined =>
+  db.prepare("select * from records where id = ?").get(id) as Row | undefined;
 
 export const ensureSchema = (): void => {
   db.exec(`
@@ -80,27 +83,25 @@ export const createRecord = (
 ): StoredRecord => {
   const id = randomUUID();
   db.prepare(
-    "insert into records (id, feature, entity, data) values (?, ?, ?, ?)",
-  ).run(id, feature, entity, JSON.stringify(data));
-  const row = db.prepare("select * from records where id = ?").get(id) as
-    | Row
-    | undefined;
+    "insert into records (id, feature, entity, data, created_at) values (?, ?, ?, ?, ?)",
+  ).run(id, feature, entity, JSON.stringify(data), new Date().toISOString());
+  const row = getRow(id);
   if (!row) throw new Error("failed to create record");
   return toRecord(row);
 };
 
-// Flip a boolean field inside the JSON data (e.g. a todo's `done`).
-export const toggleField = (id: string, field: string): void => {
-  const row = db.prepare("select data from records where id = ?").get(id) as
-    | { data: string }
-    | undefined;
-  if (!row) return;
+// Flip a boolean field inside the JSON data and return the updated record.
+export const toggleField = (id: string, field: string): StoredRecord | null => {
+  const row = getRow(id);
+  if (!row) return null;
   const data = JSON.parse(row.data) as Record<string, unknown>;
   const next = { ...data, [field]: !Boolean(data[field]) };
   db.prepare("update records set data = ? where id = ?").run(
     JSON.stringify(next),
     id,
   );
+  const updated = getRow(id);
+  return updated ? toRecord(updated) : null;
 };
 
 export const deleteRecord = (id: string): void => {

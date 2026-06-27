@@ -1,6 +1,7 @@
 // Turn a feature's Markdown + its real DB records into a working page, STREAMED.
-// Uses Haiku for low latency; the host page provides base styles so output stays
-// small. The caller streams chunks straight to the browser as they arrive.
+// Uses Haiku for low latency; the host page provides base styles + Turbo so output
+// stays small. The list uses stable ids so actions can patch rows via Turbo Streams
+// without regenerating the page.
 
 import Anthropic from "@anthropic-ai/sdk";
 import type { FeatureSource } from "./markdown";
@@ -13,22 +14,30 @@ const systemPrompt = (
 ): string => `You are the page generator for "Sloppy Joes",
 a framework that turns a feature's Markdown requirements into a working web page at runtime.
 
-Output the HTML for a single page implementing the feature's user stories. Rules:
-- Output ONLY the HTML that goes inside <body> — no <!doctype>, <html>, <head>, or <body> tags,
-  and no Markdown code fences.
-- The host page already provides clean base styles (typography, links, inputs, buttons). Do NOT
-  restyle those. Add at most a SMALL <style> block for feature-specific layout. Keep output compact.
-- Use semantic HTML. No <script> and no external resources (images, fonts, CDNs).
-- Render EXACTLY the records in the DATA section. NEVER invent or add rows. If empty, show a short
-  empty state.
-- Wire interactions with plain HTML <form> posts (no JavaScript) to "/${feature}/_action", each
-  with a hidden input "_action":
-    • Create: _action=create, hidden _entity=<entity, e.g. todo>, a text input per editable field
-      (name=field, e.g. title), and a submit button.
-    • Toggle: _action=toggle, hidden _id=<record id>, hidden _field=<boolean field, e.g. done>,
-      and a submit button.
-    • Delete: _action=delete, hidden _id=<record id>, and a submit button.
-  The server persists the change and reloads this page after each action.`;
+Output the HTML that goes inside <body> for a page implementing the feature's user stories.
+Rules:
+- Output ONLY body HTML — no <!doctype>, <html>, <head>, <body> tags, and no Markdown fences.
+- The host page already provides base styles (typography, links, inputs, buttons) AND the Turbo
+  library. Add at most a SMALL <style> block for layout. Keep output compact. No <script> and no
+  external resources (images, fonts, CDNs).
+- Render EXACTLY the records in the DATA section. NEVER invent rows.
+
+You MUST use these exact structures so the framework can update the list live:
+
+1) The list container — always include it (empty if there are no records):
+   <ul id="sj-items"> ...one row per record... </ul>
+
+2) Each record row MUST be EXACTLY (substitute the record's real id and text; use the record's
+   own "id" value from DATA):
+   <li id="sj-item-ID" class="sj-item"><form method="post" action="/${feature}/_action"><input type="hidden" name="_action" value="toggle"><input type="hidden" name="_id" value="ID"><input type="hidden" name="_field" value="done"><button type="submit" aria-label="toggle">MARK</button></form><span class="sj-text"STYLE>TEXT</span><form method="post" action="/${feature}/_action"><input type="hidden" name="_action" value="delete"><input type="hidden" name="_id" value="ID"><button type="submit" aria-label="delete">✕</button></form></li>
+   where: MARK is ✓ when the record's done is true else ○; STYLE is
+   ' style="text-decoration:line-through;opacity:.6"' when done is true else empty; TEXT is the
+   record's text field(s) (e.g. its title).
+
+3) A create form (entity is the model name, e.g. todo; one text input per editable field):
+   <form method="post" action="/${feature}/_action"><input type="hidden" name="_action" value="create"><input type="hidden" name="_entity" value="ENTITY"><input type="text" name="title" placeholder="..." required><button type="submit">Add</button></form>
+
+You may add page chrome (a heading, short intro, layout) around these. Return raw HTML only.`;
 
 const userContent = (
   feature: FeatureSource,

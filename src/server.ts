@@ -1,9 +1,11 @@
 // Sloppy Joes — local dev server.
-// On each visit the server reads the feature's Markdown + its real DB records
-// and STREAMS an AI-generated page: the shell paints immediately, then the body
-// streams in as Claude produces it. Generated forms POST to /:feature/_action,
-// which persists to SQLite and reloads the page.
+// GET /:feature STREAMS an AI-generated page (shell paints instantly, body streams
+// in). Actions POST to /:feature/_action and return Turbo Stream fragments that
+// patch the DOM in place — no full-page regeneration — falling back to a 303
+// redirect for non-Turbo clients. Data persists in SQLite.
 
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { stream } from "hono/streaming";
@@ -23,6 +25,7 @@ import {
   readConfig,
   readFeature,
 } from "./markdown";
+import { ITEMS_ID, itemId, renderItem, turboStream } from "./render";
 
 // Load .env (ANTHROPIC_API_KEY) if present; otherwise rely on the ambient env.
 try {
@@ -32,6 +35,15 @@ try {
 }
 
 ensureSchema();
+
+// The Turbo library, read once and served locally (no external CDN).
+const turboJs = readFileSync(
+  path.join(
+    process.cwd(),
+    "node_modules/@hotwired/turbo/dist/turbo.es2017-umd.js",
+  ),
+  "utf8",
+);
 
 const app = new Hono();
 
@@ -44,7 +56,7 @@ const appName = async (): Promise<string> => {
 const errorPage = (message: string): string =>
   page(
     "Error",
-    `<h1>Something went wrong</h1><p class="muted">${escapeHtml(message)}</p><p><a href="/">← home</a></p>`,
+    `<h1>Something went wrong</h1><p class="muted">${escapeHtml(message)}</p><p><a href="/" data-turbo="false">← home</a></p>`,
   );
 
 // Debug view: show the assembled Markdown source instead of generating.
@@ -52,7 +64,7 @@ const sourceView = (feature: string, source: FeatureSource): string => {
   const fileList = source.files
     .map((f) => `<li><code>${escapeHtml(f.relPath)}</code></li>`)
     .join("");
-  return `<p><a href="/">← home</a> · <a href="/${encodeURIComponent(feature)}">generated page</a></p>
+  return `<p><a href="/" data-turbo="false">← home</a> · <a href="/${encodeURIComponent(feature)}" data-turbo="false">generated page</a></p>
 <h1>${escapeHtml(feature)} <span class="muted">— source</span></h1>
 <ul>${fileList}</ul>
 <pre>${escapeHtml(source.combined)}</pre>`;
@@ -71,6 +83,12 @@ const flatten = (r: {
 
 app.get("/_health", (c) => c.json({ status: "ok" }));
 
+app.get("/_assets/turbo.js", (c) =>
+  c.body(turboJs, 200, {
+    "Content-Type": "application/javascript; charset=utf-8",
+  }),
+);
+
 app.get("/", async (c) => {
   try {
     const [name, features] = await Promise.all([appName(), listFeatures()]);
@@ -78,7 +96,7 @@ app.get("/", async (c) => {
       ? `<ul>${features
           .map(
             (f) =>
-              `<li><a href="/${encodeURIComponent(f)}">${escapeHtml(f)}</a></li>`,
+              `<li><a href="/${encodeURIComponent(f)}" data-turbo="false">${escapeHtml(f)}</a></li>`,
           )
           .join("")}</ul>`
       : `<p class="muted">No features yet. Add one under <code>features/</code>.</p>`;
@@ -105,7 +123,7 @@ app.get("/:feature", async (c) => {
   }
 
   if (!source) {
-    const body = `<p><a href="/">← home</a></p>
+    const body = `<p><a href="/" data-turbo="false">← home</a></p>
 <h1>Feature not found</h1>
 <p class="muted">No <code>${escapeHtml(feature)}</code> under <code>features/</code>.</p>`;
     return c.html(page("Not found", body), 404);
@@ -116,7 +134,7 @@ app.get("/:feature", async (c) => {
   }
 
   const records = listRecords(feature).map(flatten);
-  const toolbar = `<p class="muted"><a href="/">← home</a> · <a href="/${encodeURIComponent(feature)}?source">view source</a> · <a href="/${encodeURIComponent(feature)}">↻ regenerate</a></p>`;
+  const toolbar = `<p class="muted"><a href="/" data-turbo="false">← home</a> · <a href="/${encodeURIComponent(feature)}?source" data-turbo="false">view source</a> · <a href="/${encodeURIComponent(feature)}" data-turbo="false">↻ regenerate</a></p>`;
 
   // Stream: shell paints immediately, then the generated body streams in.
   c.header("Content-Type", "text/html; charset=utf-8");
@@ -159,6 +177,16 @@ app.post("/:feature/_action", async (c) => {
       return c.html(errorPage(`Unknown action: ${action}`), 400);
     }
 
+    // Turbo asks for stream responses via the Accept header. If present, patch the
+    // DOM in place; otherwise fall back to a redirect (full regeneration).
+    const wantsStream = (c.req.header("Accept") ?? "").includes(
+      "text/vnd.turbo-stream.html",
+    );
+    const streamResponse = (html: string) =>
+      c.body(html, 200, {
+        "Content-Type": "text/vnd.turbo-stream.html; charset=utf-8",
+      });
+
     if (action === "create") {
       const entity = str("_entity") || "item";
       const data = Object.fromEntries(
@@ -169,13 +197,26 @@ app.post("/:feature/_action", async (c) => {
             typeof value === "string" ? value : String(value),
           ]),
       );
-      createRecord(feature, entity, data);
+      const record = createRecord(feature, entity, data);
+      if (wantsStream) {
+        return streamResponse(
+          turboStream("append", ITEMS_ID, renderItem(feature, record)),
+        );
+      }
     } else if (action === "toggle") {
       const id = str("_id");
-      if (id) toggleField(id, str("_field") || "done");
+      const updated = id ? toggleField(id, str("_field") || "done") : null;
+      if (wantsStream && updated) {
+        return streamResponse(
+          turboStream("replace", itemId(id), renderItem(feature, updated)),
+        );
+      }
     } else if (action === "delete") {
       const id = str("_id");
       if (id) deleteRecord(id);
+      if (wantsStream && id) {
+        return streamResponse(turboStream("remove", itemId(id)));
+      }
     }
 
     return c.redirect(`/${encodeURIComponent(feature)}`, 303);
