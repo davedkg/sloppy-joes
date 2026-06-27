@@ -1,10 +1,12 @@
-// Sloppy Joes — local dev server (M4).
+// Sloppy Joes — local dev server.
 // On each visit the server reads the feature's Markdown + its real DB records
-// and asks Claude to generate the page. Generated forms POST to /:feature/_action,
-// which persists to SQLite and reloads the page. M3 (Renderify) is still pending.
+// and STREAMS an AI-generated page: the shell paints immediately, then the body
+// streams in as Claude produces it. Generated forms POST to /:feature/_action,
+// which persists to SQLite and reloads the page.
 
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
+import { stream } from "hono/streaming";
 import {
   createRecord,
   deleteRecord,
@@ -12,8 +14,8 @@ import {
   listRecords,
   toggleField,
 } from "./db";
-import { generatePage } from "./generate";
-import { escapeHtml, page } from "./html";
+import { generatePageStream } from "./generate";
+import { escapeHtml, page, pageClose, pageHead } from "./html";
 import { error, log } from "./log";
 import {
   type FeatureSource,
@@ -56,7 +58,7 @@ const sourceView = (feature: string, source: FeatureSource): string => {
 <pre>${escapeHtml(source.combined)}</pre>`;
 };
 
-// Flatten a stored record into the shape the generator renders: id + fields + createdAt.
+// Flatten a stored record into the shape the generator renders: fields + id + createdAt.
 const flatten = (r: {
   id: string;
   data: Record<string, unknown>;
@@ -93,27 +95,49 @@ ${list}`;
 
 app.get("/:feature", async (c) => {
   const feature = c.req.param("feature");
+
+  let source: FeatureSource | null;
   try {
-    const source = await readFeature(feature);
-    if (!source) {
-      const body = `<p><a href="/">← home</a></p>
-<h1>Feature not found</h1>
-<p class="muted">No <code>${escapeHtml(feature)}</code> under <code>features/</code>.</p>`;
-      return c.html(page("Not found", body), 404);
-    }
-
-    if (c.req.query("source") !== undefined) {
-      return c.html(page(`${feature} — source`, sourceView(feature, source)));
-    }
-
-    const records = listRecords(feature).map(flatten);
-    const generated = await generatePage(source, records);
-    const toolbar = `<p class="muted"><a href="/">← home</a> · <a href="/${encodeURIComponent(feature)}?source">view source</a> · <a href="/${encodeURIComponent(feature)}">↻ regenerate</a></p>`;
-    return c.html(page(feature, `${toolbar}\n${generated}`));
+    source = await readFeature(feature);
   } catch (err) {
     error(`feature "${feature}" failed: ${(err as Error).message}`);
     return c.html(errorPage((err as Error).message), 500);
   }
+
+  if (!source) {
+    const body = `<p><a href="/">← home</a></p>
+<h1>Feature not found</h1>
+<p class="muted">No <code>${escapeHtml(feature)}</code> under <code>features/</code>.</p>`;
+    return c.html(page("Not found", body), 404);
+  }
+
+  if (c.req.query("source") !== undefined) {
+    return c.html(page(`${feature} — source`, sourceView(feature, source)));
+  }
+
+  const records = listRecords(feature).map(flatten);
+  const toolbar = `<p class="muted"><a href="/">← home</a> · <a href="/${encodeURIComponent(feature)}?source">view source</a> · <a href="/${encodeURIComponent(feature)}">↻ regenerate</a></p>`;
+
+  // Stream: shell paints immediately, then the generated body streams in.
+  c.header("Content-Type", "text/html; charset=utf-8");
+  const featureSource = source;
+  return stream(c, async (s) => {
+    await s.write(pageHead(feature));
+    await s.write(`${toolbar}\n`);
+    try {
+      await generatePageStream(featureSource, records, async (chunk) => {
+        await s.write(chunk);
+      });
+    } catch (err) {
+      error(
+        `feature "${feature}" generation failed: ${(err as Error).message}`,
+      );
+      await s.write(
+        `<p class="muted">Generation failed: ${escapeHtml((err as Error).message)}</p>`,
+      );
+    }
+    await s.write(pageClose());
+  });
 });
 
 const ACTIONS = new Set(["create", "toggle", "delete"]);

@@ -184,3 +184,6 @@ Enhancements to build later — distinct from the open *decisions* in §10.
    "static HTML, no JS" constraints). Should be driven by `config/ai` (FR-G1/G4): model, system
    prompt / generation instructions, output format (HTML vs RuntimePlan vs TSX), token/length
    limits, and design system — with possible per-feature overrides via the `presentation` part.
+2. **Caching of generated pages** — cache generated output (e.g. keyed on a hash of the feature
+   Markdown + record data) so unchanged state serves instantly, regenerating only when the source
+   or data changes. Bends the fresh-per-visit rule (FR-G2); revisit deliberately later.
