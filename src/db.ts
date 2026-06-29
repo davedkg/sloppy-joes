@@ -1,15 +1,43 @@
-// Lightweight local persistence (SQLite via better-sqlite3).
+// Lightweight local persistence. The DB is PICKED in config/data.md (driver +
+// path); SQLite (better-sqlite3) is the implemented driver for the prototype.
 // Schemaless-ish: every entity is a JSON `data` blob in one `records` table,
-// tagged by feature + entity. Works for any feature without per-model DDL.
+// tagged by feature + entity — works for any feature without per-model DDL.
 
 import Database from "better-sqlite3";
 import { randomUUID } from "node:crypto";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { log } from "./log";
 
-const dbPath =
-  process.env.SLOPPY_DB ?? path.join(process.cwd(), "data", "sloppy.db");
+const appDir = (): string => process.env.SLOPPY_APP_DIR ?? process.cwd();
+
+interface DataConfig {
+  readonly driver: string;
+  readonly path: string;
+}
+
+// Read config/data.md for the DB choice. Falls back to a local SQLite file.
+const readDataConfig = (): DataConfig => {
+  const fallback: DataConfig = { driver: "sqlite", path: "data/sloppy.db" };
+  try {
+    const text = readFileSync(path.join(appDir(), "config", "data.md"), "utf8");
+    const driver =
+      text.match(/driver:\s*(\S+)/i)?.[1]?.toLowerCase() ?? fallback.driver;
+    const dbPath = text.match(/path:\s*(\S+)/i)?.[1] ?? fallback.path;
+    return { driver, path: dbPath };
+  } catch {
+    return fallback;
+  }
+};
+
+const config = readDataConfig();
+if (config.driver !== "sqlite") {
+  throw new Error(
+    `config/data.md selects driver "${config.driver}", but only "sqlite" is implemented`,
+  );
+}
+
+const dbPath = process.env.SLOPPY_DB ?? path.resolve(appDir(), config.path);
 mkdirSync(path.dirname(dbPath), { recursive: true });
 
 const db = new Database(dbPath);
@@ -53,7 +81,7 @@ export const ensureSchema = (): void => {
     );
     create index if not exists records_feature_idx on records (feature, entity);
   `);
-  log(`database ready at ${dbPath}`);
+  log(`database ready (${config.driver}) at ${dbPath}`);
 };
 
 export const listRecords = (

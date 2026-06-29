@@ -148,9 +148,14 @@ deferred until we deep-dive the example.
 
 1. **Module artifact** — exact form/structure and where it sits on the requirements↔spec spectrum.
 2. **AI output** — code (TSX/JSX) vs spec (RuntimePlan JSON).
-3. **Design systems** — which UI/styling systems are supported.
-4. **Data** — confirm store (Supabase?), reconcile "schemaless" vs Postgres, and **where/how the
-   model is defined**.
+3. **Design systems** — _Decided (prototype):_ **Pico.css** (classless) as a fixed theme with
+   **structure-only generation** — the model emits semantic HTML, the shell owns all styling, so
+   the UI is consistent on every load. Configured in `config/design.md` (FR-A3). Other systems,
+   per-feature `presentation` overrides, and a component catalog remain future work.
+4. **Data** — _Decided (prototype):_ **SQLite** (lightweight local file), picked via
+   `config/data.md` (`driver` + `path`). "Schemaless-ish" realized as one `records` table of JSON
+   blobs. Hosted store (Supabase/Postgres) is future work. The **model is defined in each feature's
+   `models`** (decided earlier).
 5. **Actions/backend** — how generated pages bind to backend operations (the intent→action
    channel / MCP-style bridge we'd build, since Renderify lacks one).
 6. **Baseline scope** — which of the batteries-included capabilities the prototype must include.

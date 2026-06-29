@@ -93,8 +93,8 @@ sensible defaults so most stay near-empty:
 | File | Sets up | FR |
 |------|---------|----|
 | `app` | App identity · feature registry · navigation / home route | FR-A1, FR-B1 |
-| `design` | Design system (Bootstrap/Tailwind/ShadCN) + theme | FR-A3, FR-G5 |
-| `data` | Data store **connection** (Supabase) — **no model** (model lives in features) | FR-D1/D2 |
+| `design` | Design system + theme — **Pico.css (classless), structure-only generation** | FR-A3, FR-G5 |
+| `data` | Data store **selection** — `driver` + `path` (**SQLite** for the prototype); **no model** (lives in features) | FR-D1/D2 |
 | `ai` | Generation provider/model, Renderify profile, embedded component library | FR-G1, FR-G3/G4 |
 | `auth` | Accounts / sessions baseline — **deferred; "a user is anyone" for now** (`REQUIREMENTS.md` §2) | FR-B1 |
 
