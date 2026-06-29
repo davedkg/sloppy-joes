@@ -1,6 +1,6 @@
 # Sloppy Joes
 
-The demo app for the Sloppy Joes prototype.
+The demo app for Sloppy Joes.
 
 ## Home
 

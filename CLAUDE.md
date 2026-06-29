@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Sloppy Joes — an AI-powered web framework: a developer declares **features** as Markdown
 requirements and the framework **generates the web pages at runtime** (per visit) instead of
-hand-writing them. Status: **working prototype** (laptop-only demo). See `REQUIREMENTS.md` for the
+hand-writing them. Status: **working demo** (laptop-only). See `REQUIREMENTS.md` for the
 spec and `STRUCTURE.md` for the app/file conventions.
 
 Stack: Node + TypeScript (run via `tsx`, no build step) · Hono HTTP server · Anthropic Claude

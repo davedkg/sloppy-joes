@@ -94,7 +94,7 @@ sensible defaults so most stay near-empty:
 |------|---------|----|
 | `app` | App identity · feature registry · navigation / home route | FR-A1, FR-B1 |
 | `design` | Design system + theme — **Pico.css (classless), structure-only generation** | FR-A3, FR-G5 |
-| `data` | Data store **selection** — `driver` + `path` (**SQLite** for the prototype); **no model** (lives in features) | FR-D1/D2 |
+| `data` | Data store **selection** — `driver` + `path` (**SQLite**); **no model** (lives in features) | FR-D1/D2 |
 | `ai` | Generation provider/model, Renderify profile, embedded component library | FR-G1, FR-G3/G4 |
 | `auth` | Accounts / sessions baseline — **deferred; "a user is anyone" for now** (`REQUIREMENTS.md` §2) | FR-B1 |
 
@@ -111,6 +111,6 @@ sensible defaults so most stay near-empty:
 
 - **Seed / example data** — lives somewhere, **not** in the feature folder; final location TBD
   (`REQUIREMENTS.md` §10 #10).
-- **Cross-feature join ownership** — for the prototype, the feature that **declares** the
+- **Cross-feature join ownership** — for now, the feature that **declares** the
   relationship owns the join table; references resolve by entity name across the schema union.
 - **Item-naming case** for non-model parts (stories/actions) — defaulting to kebab-case.

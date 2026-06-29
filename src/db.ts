@@ -1,5 +1,5 @@
 // Lightweight local persistence. The DB is PICKED in config/data.md (driver +
-// path); SQLite (better-sqlite3) is the implemented driver for the prototype.
+// path); SQLite (better-sqlite3) is the implemented driver.
 // Schemaless-ish: every entity is a JSON `data` blob in one `records` table,
 // tagged by feature + entity — works for any feature without per-model DDL.
 

@@ -4,7 +4,7 @@
 // (e.g. a Comment with a `postId` reference to a Post) yields a parent→child
 // SHAPE the server and generator render as cards with nested child lists.
 //
-// Prototype conventions (deliberately small):
+// Conventions (deliberately small):
 //   - Entity = a `### <Name>` heading under `## Models`. Tag = name lowercased.
 //   - Field  = a `- `name` — description` bullet.
 //   - A field is a RELATIONSHIP when its description says "reference to <Entity>"

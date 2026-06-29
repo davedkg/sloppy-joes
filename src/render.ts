@@ -24,7 +24,7 @@ export interface FeatureActions {
 }
 
 // Heuristic: read the allowed actions from the feature's Markdown (stories).
-// The prototype keyword-matches; the explicit `actions` part / the /features
+// For now this keyword-matches; the explicit `actions` part / the /features
 // command will formalize this later.
 export const deriveActions = (markdown: string): FeatureActions => {
   const t = markdown.toLowerCase();

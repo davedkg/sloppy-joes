@@ -1,6 +1,6 @@
 # Sloppy Joes — Requirements
 
-> **Status:** DRAFT (prototype). Built collaboratively. Decided items are stated as
+> **Status:** DRAFT. Built collaboratively. Decided items are stated as
 > requirements; leanings and open items are marked _(leaning)_ / _(TBD)_ and consolidated in
 > §10.
 
@@ -18,7 +18,7 @@ write the UI), not to the audience (the audience is developers).
 
 ## 2. Scope & Status
 
-- **This is a PROTOTYPE.** The goal is to prove the concept and functional behavior.
+- **The goal is to prove the concept and functional behavior.**
 - **Out of scope for now:** non-functional requirements — performance, latency, cost, scale,
   production hardening.
 - Language, stack, and deployment are **undecided**.
@@ -91,8 +91,8 @@ write the UI), not to the audience (the audience is developers).
 - **FR-B1** — The framework must provide, **by convention**, the baseline capabilities common to
   typical web apps — e.g. data/persistence (CRUD), accounts/auth & sessions, forms & validation,
   navigation/routing, lists/search, file handling, notifications, and security basics. _Exact
-  enumeration and the prototype subset: TBD._ **Accounts/auth & sessions are deferred (§2) and not
-  in the current prototype subset.**
+  enumeration and the current subset: TBD._ **Accounts/auth & sessions are deferred (§2) and not
+  in the current subset.**
 
 ### 6.5 Live Upgrades (future — v2/v3)
 - **FR-L1** — A developer can change app functionality on a **live, deployed** app by editing the
@@ -137,7 +137,7 @@ deferred until we deep-dive the example.
   backend" pattern; Sloppy Joes adapts it from a chat host to a full web page.
 - **Data: Supabase** _(leaning)_.
 
-## 9. Non-Goals (prototype)
+## 9. Non-Goals
 
 - Performance, cost, latency, scale, and production hardening (see §2).
 - A non-technical / pure no-code audience (Sloppy Joes targets developers).
@@ -147,19 +147,19 @@ deferred until we deep-dive the example.
 
 1. **Module artifact** — exact form/structure and where it sits on the requirements↔spec spectrum.
 2. **AI output** — code (TSX/JSX) vs spec (RuntimePlan JSON).
-3. **Design systems** — _Decided (prototype):_ **Pico.css** (classless) as a fixed theme with
+3. **Design systems** — _Decided:_ **Pico.css** (classless) as a fixed theme with
    **structure-only generation** — the model emits semantic HTML, the shell owns all styling, so
    the UI is consistent on every load. Configured in `config/design.md` (FR-A3). Other systems,
    per-feature `presentation` overrides, and a component catalog remain future work.
-4. **Data** — _Decided (prototype):_ **SQLite** (lightweight local file), picked via
+4. **Data** — _Decided:_ **SQLite** (lightweight local file), picked via
    `config/data.md` (`driver` + `path`). "Schemaless-ish" realized as one `records` table of JSON
    blobs. Hosted store (Supabase/Postgres) is future work. The **model is defined in each feature's
    `models`** (decided earlier).
 5. **Actions/backend** — how generated pages bind to backend operations (the intent→action
    channel / MCP-style bridge we'd build, since Renderify lacks one).
-6. **Baseline scope** — which of the batteries-included capabilities the prototype must include.
+6. **Baseline scope** — which of the batteries-included capabilities to include initially.
 7. **Stack** — language, runtime, deployment.
-8. **Prototype success criteria** — the concrete demo that proves the concept.
+8. **Success criteria** — the concrete demo that proves the concept.
 9. **Example app** — detailed todo-list modules/workflows.
 10. **Seed / example data** — where it lives. Decided: **not** inside the feature folder;
     final location TBD.

@@ -1,6 +1,6 @@
 # Sloppy Joes
 
-**A weird prototype that turns Markdown requirements into working web pages at runtime.**
+**A weird experiment that turns Markdown requirements into working web pages at runtime.**
 
 You describe what an app should do in plain Markdown — its features, data, and user stories — and on
 every visit Claude generates the actual page from that description. No hand-written HTML, no build
@@ -38,8 +38,6 @@ Then open **http://localhost:3000** — the home page lists the app's features. 
 
 Each visit generates the page live from that feature's Markdown.
 
-> The first load of a page takes a few seconds — it's generated live by the model on each visit.
-
 ## How it works
 
 - `GET /:feature` reads the app's Markdown (`features/` + `config/`) and asks Claude to generate a
@@ -74,7 +72,7 @@ REQUIREMENTS.md  STRUCTURE.md   # docs
 - **Model** — `SLOPPY_MODEL` (default: Claude Haiku 4.5).
 - **Data store** — chosen in the app's `config/data.md` (`driver` + `path`); SQLite is the only
   implemented driver. Override the path with `SLOPPY_DB`.
-- **Design** — chosen in the app's `config/design.md` (Pico.css for the prototype).
+- **Design** — chosen in the app's `config/design.md` (Pico.css by default).
 
 ## Run a different app
 
