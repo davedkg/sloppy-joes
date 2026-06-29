@@ -8,6 +8,7 @@ import { randomUUID } from "node:crypto";
 import { mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { log } from "./log";
+import { timeSync } from "./log-context";
 
 const appDir = (): string => process.env.SLOPPY_APP_DIR ?? process.cwd();
 
@@ -84,54 +85,60 @@ export const ensureSchema = (): void => {
   log(`database ready (${config.driver}) at ${dbPath}`);
 };
 
-export const listRecords = (
-  feature: string,
-  entity?: string,
-): StoredRecord[] => {
-  const rows = (
-    entity
-      ? db
-          .prepare(
-            "select * from records where feature = ? and entity = ? order by created_at asc",
-          )
-          .all(feature, entity)
-      : db
-          .prepare(
-            "select * from records where feature = ? order by created_at asc",
-          )
-          .all(feature)
-  ) as Row[];
-  return rows.map(toRecord);
-};
+export const listRecords = (feature: string, entity?: string): StoredRecord[] =>
+  timeSync(
+    "DB",
+    `listRecords(${feature}${entity ? `, ${entity}` : ""})`,
+    () => {
+      const rows = (
+        entity
+          ? db
+              .prepare(
+                "select * from records where feature = ? and entity = ? order by created_at asc",
+              )
+              .all(feature, entity)
+          : db
+              .prepare(
+                "select * from records where feature = ? order by created_at asc",
+              )
+              .all(feature)
+      ) as Row[];
+      return rows.map(toRecord);
+    },
+    (records) => `${records.length} rows`,
+  );
 
 export const createRecord = (
   feature: string,
   entity: string,
   data: Record<string, unknown>,
-): StoredRecord => {
-  const id = randomUUID();
-  db.prepare(
-    "insert into records (id, feature, entity, data, created_at) values (?, ?, ?, ?, ?)",
-  ).run(id, feature, entity, JSON.stringify(data), new Date().toISOString());
-  const row = getRow(id);
-  if (!row) throw new Error("failed to create record");
-  return toRecord(row);
-};
+): StoredRecord =>
+  timeSync("DB", `createRecord(${feature}, ${entity})`, () => {
+    const id = randomUUID();
+    db.prepare(
+      "insert into records (id, feature, entity, data, created_at) values (?, ?, ?, ?, ?)",
+    ).run(id, feature, entity, JSON.stringify(data), new Date().toISOString());
+    const row = getRow(id);
+    if (!row) throw new Error("failed to create record");
+    return toRecord(row);
+  });
 
 // Flip a boolean field inside the JSON data and return the updated record.
-export const toggleField = (id: string, field: string): StoredRecord | null => {
-  const row = getRow(id);
-  if (!row) return null;
-  const data = JSON.parse(row.data) as Record<string, unknown>;
-  const next = { ...data, [field]: !Boolean(data[field]) };
-  db.prepare("update records set data = ? where id = ?").run(
-    JSON.stringify(next),
-    id,
-  );
-  const updated = getRow(id);
-  return updated ? toRecord(updated) : null;
-};
+export const toggleField = (id: string, field: string): StoredRecord | null =>
+  timeSync("DB", `toggleField(${field})`, () => {
+    const row = getRow(id);
+    if (!row) return null;
+    const data = JSON.parse(row.data) as Record<string, unknown>;
+    const next = { ...data, [field]: !Boolean(data[field]) };
+    db.prepare("update records set data = ? where id = ?").run(
+      JSON.stringify(next),
+      id,
+    );
+    const updated = getRow(id);
+    return updated ? toRecord(updated) : null;
+  });
 
-export const deleteRecord = (id: string): void => {
-  db.prepare("delete from records where id = ?").run(id);
-};
+export const deleteRecord = (id: string): void =>
+  timeSync("DB", "deleteRecord", () => {
+    db.prepare("delete from records where id = ?").run(id);
+  });

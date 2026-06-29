@@ -18,6 +18,7 @@ import {
 } from "./db";
 import { generatePage } from "./generate";
 import { escapeHtml, page } from "./html";
+import { addParams } from "./log-context";
 import { error, log } from "./log";
 import {
   type FeatureSource,
@@ -25,6 +26,7 @@ import {
   readConfig,
   readFeature,
 } from "./markdown";
+import { requestLogger } from "./request-logger";
 import {
   ITEMS_ID,
   deriveActions,
@@ -49,6 +51,9 @@ const turboJs = asset("node_modules/@hotwired/turbo/dist/turbo.es2017-umd.js");
 const picoCss = asset("node_modules/@picocss/pico/css/pico.min.css");
 
 const app = new Hono();
+
+// Rails-style per-request logging (method/path/params/timings/status).
+app.use("*", requestLogger);
 
 const appName = async (): Promise<string> => {
   const config = await readConfig("app");
@@ -154,6 +159,7 @@ app.post("/:feature/_action", async (c) => {
 
     const actions = deriveActions(source.combined);
     const body = await c.req.parseBody();
+    addParams(body);
     const str = (key: string): string => {
       const value = body[key];
       return typeof value === "string" ? value : "";

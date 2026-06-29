@@ -4,6 +4,7 @@
 // (no streaming). The list uses stable ids so actions patch rows via Turbo Streams.
 
 import Anthropic from "@anthropic-ai/sdk";
+import { time } from "./log-context";
 import type { FeatureSource } from "./markdown";
 import type { FeatureActions } from "./render";
 
@@ -100,13 +101,25 @@ export const generatePage = async (
   const client = new Anthropic({ apiKey });
   const model = process.env.SLOPPY_MODEL ?? DEFAULT_MODEL;
 
-  const message = await client.messages.create({
-    model,
-    max_tokens: 4096,
-    temperature: 0.2,
-    system: systemPrompt(feature.name, actions),
-    messages: [{ role: "user", content: userContent(feature, records) }],
-  });
+  const message = await time(
+    "AI",
+    `generate (${model})`,
+    () =>
+      client.messages.create({
+        model,
+        max_tokens: 4096,
+        temperature: 0.2,
+        system: systemPrompt(feature.name, actions),
+        messages: [{ role: "user", content: userContent(feature, records) }],
+      }),
+    (m) => {
+      const out = m.content
+        .map((block) => (block.type === "text" ? block.text : ""))
+        .join("");
+      const kb = (Buffer.byteLength(out) / 1024).toFixed(1);
+      return `${kb}KB, ${m.usage.input_tokens}→${m.usage.output_tokens} tok`;
+    },
+  );
 
   const text = message.content
     .map((block) => (block.type === "text" ? block.text : ""))

@@ -7,6 +7,7 @@ Let a user capture and track things they need to do.
 - See a list of todos.
 - Create a todo.
 - Toggle a todo complete / incomplete.
+- Delete a todo.
 
 ## Models
 
