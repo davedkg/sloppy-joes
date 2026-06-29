@@ -16,7 +16,7 @@ import {
   listRecords,
   toggleField,
 } from "./db";
-import { generatePage } from "./generate";
+import { childrenKey, generatePage } from "./generate";
 import { escapeHtml, page } from "./html";
 import { addParams } from "./log-context";
 import { error, log } from "./log";
@@ -29,11 +29,14 @@ import {
 import { requestLogger } from "./request-logger";
 import {
   ITEMS_ID,
+  childrenId,
   deriveActions,
   itemId,
   renderItem,
+  renderParent,
   turboStream,
 } from "./render";
+import { editableFields, featureShape, parseSchema } from "./schema";
 
 // Load .env (ANTHROPIC_API_KEY) if present; otherwise rely on the ambient env.
 try {
@@ -89,6 +92,23 @@ const flatten = (r: {
   createdAt: r.createdAt,
 });
 
+// Build the DATA payload for a parent/child feature: each parent flattened, with
+// its children nested under a "<child>s" key (filtered by the relationship field).
+const groupParentChild = (
+  feature: string,
+  parentEntity: string,
+  childEntity: string,
+  refField: string,
+): Record<string, unknown>[] => {
+  const parents = listRecords(feature, parentEntity);
+  const children = listRecords(feature, childEntity);
+  const key = childrenKey(childEntity);
+  return parents.map((p) => ({
+    ...flatten(p),
+    [key]: children.filter((c) => c.data[refField] === p.id).map(flatten),
+  }));
+};
+
 app.get("/_health", (c) => c.json({ status: "ok" }));
 
 app.get("/_assets/turbo.js", (c) =>
@@ -139,10 +159,19 @@ app.get("/:feature", async (c) => {
     }
 
     const actions = deriveActions(source.combined);
-    const records = listRecords(feature).map(flatten);
+    const shape = featureShape(parseSchema(source.combined));
+    const records =
+      shape.kind === "parentChild"
+        ? groupParentChild(
+            feature,
+            shape.parent.name,
+            shape.child.name,
+            shape.refField,
+          )
+        : listRecords(feature).map(flatten);
     const toolbar = `<p class="muted"><a href="/" data-turbo="false">← home</a> · <a href="/${encodeURIComponent(feature)}?source" data-turbo="false">view source</a> · <a href="/${encodeURIComponent(feature)}" data-turbo="false">↻ regenerate</a></p>`;
 
-    const generated = await generatePage(source, records, actions);
+    const generated = await generatePage(source, records, actions, shape);
     return c.html(page(feature, `${toolbar}\n${generated}`));
   } catch (err) {
     error(`feature "${feature}" failed: ${(err as Error).message}`);
@@ -158,6 +187,7 @@ app.post("/:feature/_action", async (c) => {
       return c.html(page("Not found", "<h1>Feature not found</h1>"), 404);
 
     const actions = deriveActions(source.combined);
+    const shape = featureShape(parseSchema(source.combined));
     const body = await c.req.parseBody();
     addParams(body);
     const str = (key: string): string => {
@@ -200,6 +230,31 @@ app.post("/:feature/_action", async (c) => {
       );
       const record = createRecord(feature, entity, data);
       if (wantsStream) {
+        // A child record (e.g. a comment) appends into ITS parent's nested list;
+        // a parent record appends a card into #sj-items; flat features append a row.
+        if (shape.kind === "parentChild" && entity === shape.child.name) {
+          const parentId = str(shape.refField);
+          const target = parentId ? childrenId(parentId) : ITEMS_ID;
+          return streamResponse(
+            turboStream("append", target, renderItem(feature, record, actions)),
+          );
+        }
+        if (shape.kind === "parentChild" && entity === shape.parent.name) {
+          return streamResponse(
+            turboStream(
+              "append",
+              ITEMS_ID,
+              renderParent(
+                feature,
+                record,
+                actions,
+                shape.child.name,
+                shape.refField,
+                editableFields(shape.child),
+              ),
+            ),
+          );
+        }
         return streamResponse(
           turboStream("append", ITEMS_ID, renderItem(feature, record, actions)),
         );
