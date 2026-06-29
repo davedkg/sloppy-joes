@@ -1,4 +1,4 @@
-# Sloppy Joes Demo
+# Sloppy Joes
 
 The demo app for the Sloppy Joes prototype.
 
