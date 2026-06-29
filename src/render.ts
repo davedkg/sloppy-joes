@@ -60,8 +60,10 @@ const textFields = (
     )
     .sort(([a], [b]) => Number(b === "author") - Number(a === "author"));
 
-const deleteForm = (feature: string, id: string): string =>
-  `<form method="post" action="${actionPath(feature)}">${hidden("_action", "delete")}${hidden("_id", id)}<button type="submit" aria-label="delete">✕</button></form>`;
+// Delete is destructive: data-turbo-confirm makes Turbo prompt before submitting
+// (the shell's Turbo JS handles it; non-JS submits still fall through to the 303).
+const deleteForm = (feature: string, id: string, noun: string): string =>
+  `<form method="post" action="${actionPath(feature)}" data-turbo-confirm="Delete this ${escapeHtml(noun)}?">${hidden("_action", "delete")}${hidden("_id", id)}<button type="submit" aria-label="delete">✕</button></form>`;
 
 // One leaf row: [toggle] · text · [delete] — controls gated by actions.
 export const renderItem = (
@@ -87,7 +89,7 @@ export const renderItem = (
   const toggleForm = actions.toggle
     ? `<form method="post" action="${actionPath(feature)}">${hidden("_action", "toggle")}${hidden("_id", id)}${hidden("_field", "done")}<button type="submit" aria-label="toggle">${done ? "✓" : "○"}</button></form>`
     : "";
-  const remove = actions.delete ? deleteForm(feature, id) : "";
+  const remove = actions.delete ? deleteForm(feature, id, record.entity) : "";
 
   return `<li id="${itemId(id)}" class="sj-item">${toggleForm}<span class="sj-text"${textStyle}>${text}</span>${remove}</li>`;
 };
@@ -129,7 +131,7 @@ export const renderParent = (
 
   const byline = author ? ` <small>by ${escapeHtml(author)}</small>` : "";
   const bodyHtml = body ? `<p>${escapeHtml(body)}</p>` : "";
-  const remove = actions.delete ? deleteForm(feature, id) : "";
+  const remove = actions.delete ? deleteForm(feature, id, record.entity) : "";
   const form = actions.create
     ? childForm(feature, childEntity, refField, id, childFields)
     : "";

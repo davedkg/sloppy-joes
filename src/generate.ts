@@ -15,7 +15,11 @@ const DEFAULT_MODEL = "claude-haiku-4-5-20251001";
 // Key under which a parent's children are nested in the DATA payload (e.g. "comments").
 export const childrenKey = (childEntity: string): string => `${childEntity}s`;
 
-const flatPrompt = (feature: string, actions: FeatureActions): string => {
+const flatPrompt = (
+  feature: string,
+  actions: FeatureActions,
+  entity: string,
+): string => {
   const allowed =
     [
       actions.create && "create",
@@ -29,7 +33,7 @@ const flatPrompt = (feature: string, actions: FeatureActions): string => {
     ? `<form method="post" action="/${feature}/_action"><input type="hidden" name="_action" value="toggle"><input type="hidden" name="_id" value="ID"><input type="hidden" name="_field" value="done"><button type="submit" aria-label="toggle">MARK</button></form>`
     : "";
   const deleteForm = actions.delete
-    ? `<form method="post" action="/${feature}/_action"><input type="hidden" name="_action" value="delete"><input type="hidden" name="_id" value="ID"><button type="submit" aria-label="delete">✕</button></form>`
+    ? `<form method="post" action="/${feature}/_action" data-turbo-confirm="Delete this ${entity}?"><input type="hidden" name="_action" value="delete"><input type="hidden" name="_id" value="ID"><button type="submit" aria-label="delete">✕</button></form>`
     : "";
   const rowTemplate = `<li id="sj-item-ID" class="sj-item">${toggleForm}<span class="sj-text"STYLE>TEXT</span>${deleteForm}</li>`;
 
@@ -89,10 +93,10 @@ const parentChildPrompt = (
     .map((f) => `<input type="text" name="${f}" placeholder="${f}" required>`)
     .join("");
   const childDelete = actions.delete
-    ? `<form method="post" action="/${feature}/_action"><input type="hidden" name="_action" value="delete"><input type="hidden" name="_id" value="CHILD_ID"><button type="submit" aria-label="delete">✕</button></form>`
+    ? `<form method="post" action="/${feature}/_action" data-turbo-confirm="Delete this ${child.name}?"><input type="hidden" name="_action" value="delete"><input type="hidden" name="_id" value="CHILD_ID"><button type="submit" aria-label="delete">✕</button></form>`
     : "";
   const parentDelete = actions.delete
-    ? `<form method="post" action="/${feature}/_action"><input type="hidden" name="_action" value="delete"><input type="hidden" name="_id" value="PARENT_ID"><button type="submit" aria-label="delete">✕</button></form>`
+    ? `<form method="post" action="/${feature}/_action" data-turbo-confirm="Delete this ${parent.label.toLowerCase()}?"><input type="hidden" name="_action" value="delete"><input type="hidden" name="_id" value="PARENT_ID"><button type="submit" aria-label="delete">✕</button></form>`
     : "";
   const childForm = `<form method="post" action="/${feature}/_action"><input type="hidden" name="_action" value="create"><input type="hidden" name="_entity" value="${child.name}"><input type="hidden" name="${child.refField}" value="PARENT_ID">${childInputs}<button type="submit">Add ${child.name}</button></form>`;
   const createParent = actions.create
@@ -150,7 +154,7 @@ const systemPrompt = (
       },
     );
   }
-  return flatPrompt(feature, actions);
+  return flatPrompt(feature, actions, shape.entity?.name ?? "item");
 };
 
 const userContent = (
