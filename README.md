@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="assets/logo.png" alt="Sloppy Joes logo" width="160">
-</p>
-
 # Sloppy Joes
 
 **A weird experiment that turns Markdown requirements into working web pages at runtime.**
@@ -12,6 +8,10 @@ step, no templates. (Under the hood it's a small framework; you just never write
 
 See [`REQUIREMENTS.md`](./REQUIREMENTS.md) for the concept and [`STRUCTURE.md`](./STRUCTURE.md) for
 how an app's files are organized.
+
+<p align="center">
+  <img src="assets/overview.png" alt="Sloppy Joes: write a feature in Markdown, save it, and the page is generated at runtime" width="100%">
+</p>
 
 ## Prerequisites
 
