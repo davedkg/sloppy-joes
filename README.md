@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/overview.png" alt="Sloppy Joes: write a feature in Markdown, save it, and the page is generated at runtime" width="100%">
+  <img src="assets/infographic.png" alt="Sloppy Joes: write a feature in Markdown, save it, and the page is generated at runtime" width="100%">
 </p>
 
 # Sloppy Joes
