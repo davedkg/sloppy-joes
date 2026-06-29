@@ -47,7 +47,7 @@ app. Each visit generates the page from `features/todos.md`.
 src/                 # the framework (server, generator, db, rendering)
 features/            # the app: what it does (Markdown)
 config/              # the app: data store + design choices
-REQUIREMENTS.md  STRUCTURE.md  research/   # docs
+REQUIREMENTS.md  STRUCTURE.md   # docs
 ```
 
 ## Commands

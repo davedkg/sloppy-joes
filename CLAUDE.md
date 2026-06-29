@@ -22,7 +22,7 @@ instant actions · Pico.css for a consistent theme.
   `log.ts`.
 - `features/` + `config/` (+ gitignored `data/`) — **the app**, at the repo root. The framework
   loads its app dir from `SLOPPY_APP_DIR`, defaulting to the current directory (the repo root).
-- `REQUIREMENTS.md`, `STRUCTURE.md`, `research/` — docs.
+- `REQUIREMENTS.md`, `STRUCTURE.md` — docs.
 - `.env` (gitignored, repo root) — holds `ANTHROPIC_API_KEY`; loaded via `process.loadEnvFile()`.
 
 ## Commands

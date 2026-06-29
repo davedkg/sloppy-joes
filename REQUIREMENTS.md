@@ -2,7 +2,7 @@
 
 > **Status:** DRAFT (prototype). Built collaboratively. Decided items are stated as
 > requirements; leanings and open items are marked _(leaning)_ / _(TBD)_ and consolidated in
-> §10. Research backing the architecture assumptions lives in `research/`.
+> §10.
 
 ## 1. Overview
 
@@ -128,14 +128,13 @@ A **todo list** is the canonical example: things it can do include _add a task_,
 _mark complete_, _delete a task_. How these map onto modules, and the detailed workflows, are
 deferred until we deep-dive the example.
 
-## 8. Architecture Assumptions (working — see `research/`)
+## 8. Architecture Assumptions (working)
 
 - **Frontend: Renderify** — a runtime-first, bundleless engine that renders LLM-generated UI
   (JSON `RuntimePlan` **or** free-form TSX/JSX) in the browser, no build step. **Render-only:**
-  no backend/persistence/auth and **no MCP** — that layer is ours to build. (`research/renderify-deep-dive.md`)
+  no backend/persistence/auth and **no MCP** — that layer is ours to build.
 - **Pattern reference: MCP-UI / TanStack** — the "AI generates interactive UI + actions route to a
   backend" pattern; Sloppy Joes adapts it from a chat host to a full web page.
-  (`research/tanstack-mcp-generative-ui.md`, `research/framework-candidates.md`)
 - **Data: Supabase** _(leaning)_.
 
 ## 9. Non-Goals (prototype)
