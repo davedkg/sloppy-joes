@@ -5,8 +5,8 @@
   "type": "module",
   "description": "Sloppy Joes — an AI web framework that generates pages at runtime from Markdown requirements.",
   "scripts": {
-    "dev": "SLOPPY_APP_DIR=example tsx watch src/server.ts",
-    "start": "SLOPPY_APP_DIR=example tsx src/server.ts",
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

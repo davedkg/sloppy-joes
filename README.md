@@ -28,7 +28,7 @@ npm run dev
 ```
 
 Then open **http://localhost:3000** — you'll see the home page; click **todos** to load the
-example app. Each visit generates the page from `example/features/todos.md`.
+app. Each visit generates the page from `features/todos.md`.
 
 > The first load of a page takes a few seconds — it's generated live by the model on each visit.
 
@@ -45,9 +45,8 @@ example app. Each visit generates the page from `example/features/todos.md`.
 
 ```
 src/                 # the framework (server, generator, db, rendering)
-example/             # the example app
-  features/          #   what the app does (Markdown)
-  config/            #   data store + design choices
+features/            # the app: what it does (Markdown)
+config/              # the app: data store + design choices
 REQUIREMENTS.md  STRUCTURE.md  research/   # docs
 ```
 
@@ -55,7 +54,7 @@ REQUIREMENTS.md  STRUCTURE.md  research/   # docs
 
 | Command | What it does |
 |---------|--------------|
-| `npm run dev` | Hot-reloading dev server on :3000 (serves `example`) |
+| `npm run dev` | Hot-reloading dev server on :3000 (serves the app at the repo root) |
 | `npm run start` | Same, without file watching |
 | `npm run typecheck` | `tsc --noEmit` |
 

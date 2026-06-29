@@ -13,20 +13,21 @@ Stack: Node + TypeScript (run via `tsx`, no build step) · Hono HTTP server · A
 (Haiku) for generation · SQLite (better-sqlite3) for persistence · Turbo (Streams + Drive) for
 instant actions · Pico.css for a consistent theme.
 
-## Repo layout (framework vs. example app)
+## Repo layout (framework + the app it runs)
 
 - `src/` — **the framework**: `server.ts` (routes), `generate.ts` (prompt → streamed page),
-  `markdown.ts` (reads an app's `features/` + `config/`), `db.ts` (SQLite, driver/path from
-  `config/data.md`), `render.ts` (canonical row markup + Turbo Stream helpers), `html.ts` (shell +
-  Pico + Turbo), `log.ts`.
-- `example/` — **the example app** (sandboxed): `features/` + `config/` (+ gitignored
-  `data/`). The framework loads an app dir via the `SLOPPY_APP_DIR` env var.
+  `markdown.ts` (reads the app's `features/` + `config/`), `db.ts` (SQLite, driver/path from
+  `config/data.md`), `schema.ts` (parses `models` → entities/relationships → page shape),
+  `render.ts` (canonical row markup + Turbo Stream helpers), `html.ts` (shell + Pico + Turbo),
+  `log.ts`.
+- `features/` + `config/` (+ gitignored `data/`) — **the app**, at the repo root. The framework
+  loads its app dir from `SLOPPY_APP_DIR`, defaulting to the current directory (the repo root).
 - `REQUIREMENTS.md`, `STRUCTURE.md`, `research/` — docs.
 - `.env` (gitignored, repo root) — holds `ANTHROPIC_API_KEY`; loaded via `process.loadEnvFile()`.
 
 ## Commands
 
-- `npm run dev` — hot-reloading dev server on :3000 (sets `SLOPPY_APP_DIR=example`).
+- `npm run dev` — hot-reloading dev server on :3000 (app dir defaults to the repo root).
 - `npm run start` — same, no watch.
 - `npm run typecheck` — `tsc --noEmit`.
 - Run a different app: `SLOPPY_APP_DIR=path/to/app npm run start`.
