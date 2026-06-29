@@ -15,6 +15,7 @@ import {
   ensureSchema,
   listRecords,
   toggleField,
+  updateField,
 } from "./db";
 import { childrenKey, generatePage } from "./generate";
 import { escapeHtml, page } from "./html";
@@ -200,6 +201,7 @@ app.post("/:feature/_action", async (c) => {
     const allowed =
       (action === "create" && actions.create) ||
       (action === "toggle" && actions.toggle) ||
+      (action === "edit" && actions.edit) ||
       (action === "delete" && actions.delete);
     if (!allowed) {
       return c.html(
@@ -262,6 +264,20 @@ app.post("/:feature/_action", async (c) => {
     } else if (action === "toggle") {
       const id = str("_id");
       const updated = id ? toggleField(id, str("_field") || "done") : null;
+      if (wantsStream && updated) {
+        return streamResponse(
+          turboStream(
+            "replace",
+            itemId(id),
+            renderItem(feature, updated, actions),
+          ),
+        );
+      }
+    } else if (action === "edit") {
+      const id = str("_id");
+      const field = str("_field");
+      const value = str("_value");
+      const updated = id && field ? updateField(id, field, value) : null;
       if (wantsStream && updated) {
         return streamResponse(
           turboStream(

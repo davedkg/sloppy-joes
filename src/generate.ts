@@ -24,6 +24,7 @@ const flatPrompt = (
     [
       actions.create && "create",
       actions.toggle && "toggle",
+      actions.edit && "edit",
       actions.delete && "delete",
     ]
       .filter(Boolean)
@@ -41,6 +42,12 @@ const flatPrompt = (
     ? `3) A create form (entity is the model name, e.g. todo; one text input per editable field):
    <form method="post" action="/${feature}/_action"><input type="hidden" name="_action" value="create"><input type="hidden" name="_entity" value="ENTITY"><input type="text" name="title" placeholder="..." required><button type="submit">Add</button></form>`
     : `3) Do NOT render a create form — this feature does not declare a "create" action.`;
+
+  const editSection = actions.edit
+    ? `4) Edit forms or buttons for inline editing (if the feature allows "edit" in stories). Format:
+   <form method="post" action="/${feature}/_action" style="display:inline"><input type="hidden" name="_action" value="edit"><input type="hidden" name="_id" value="ID"><input type="hidden" name="_field" value="FIELD"><input type="text" name="_value" value="CURRENT_VALUE" required><button type="submit">Save</button></form>
+   Or render each field as an inline-editable input with a save button. Each field needs its own form with the FIELD name set to the field being edited.`
+    : ``;
 
   const markExplain = actions.toggle
     ? `MARK is ✓ when the record's done is true else ○; STYLE is ' style="text-decoration:line-through;opacity:.6"' when done is true else empty; `
@@ -72,6 +79,7 @@ You MUST use these exact structures (these specific ids/classes are required):
    ${rowTemplate}
 
 ${createSection}
+${editSection}
 
 Add a heading and a short intro line. Return raw HTML only.`;
 };

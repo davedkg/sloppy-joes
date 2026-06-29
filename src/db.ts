@@ -138,6 +138,25 @@ export const toggleField = (id: string, field: string): StoredRecord | null =>
     return updated ? toRecord(updated) : null;
   });
 
+// Set a field inside the JSON data to a new value and return the updated record.
+export const updateField = (
+  id: string,
+  field: string,
+  value: unknown,
+): StoredRecord | null =>
+  timeSync("DB", `updateField(${field})`, () => {
+    const row = getRow(id);
+    if (!row) return null;
+    const data = JSON.parse(row.data) as Record<string, unknown>;
+    const next = { ...data, [field]: value };
+    db.prepare("update records set data = ? where id = ?").run(
+      JSON.stringify(next),
+      id,
+    );
+    const updated = getRow(id);
+    return updated ? toRecord(updated) : null;
+  });
+
 export const deleteRecord = (id: string): void =>
   timeSync("DB", "deleteRecord", () => {
     db.prepare("delete from records where id = ?").run(id);

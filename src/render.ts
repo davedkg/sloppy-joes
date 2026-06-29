@@ -20,6 +20,7 @@ export const childrenId = (parentId: string): string =>
 export interface FeatureActions {
   readonly create: boolean;
   readonly toggle: boolean;
+  readonly edit: boolean;
   readonly delete: boolean;
 }
 
@@ -31,6 +32,7 @@ export const deriveActions = (markdown: string): FeatureActions => {
   return {
     create: /\b(create|add|new|capture|comment)\b/.test(t),
     toggle: /\b(toggle|complete|mark|check|uncheck|done|finish)\b/.test(t),
+    edit: /\b(edit|update|modify|change)\b/.test(t),
     delete: /\b(delete|remove|archive|clear)\b/.test(t),
   };
 };
