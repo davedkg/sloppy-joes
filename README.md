@@ -27,8 +27,13 @@ echo "ANTHROPIC_API_KEY=sk-ant-..." > .env
 npm run dev
 ```
 
-Then open **http://localhost:3000** — you'll see the home page; click **todos** to load the
-app. Each visit generates the page from `features/todos.md`.
+Then open **http://localhost:3000** — the home page lists the app's features. Two ship as examples:
+
+- **todos** — a flat list: create, complete/uncomplete, delete (`features/todos.md`).
+- **posts** — a blog with comments: each post is a card with its own nested comments and comment
+  form, showing a parent→child relationship (`features/posts.md`).
+
+Each visit generates the page live from that feature's Markdown.
 
 > The first load of a page takes a few seconds — it's generated live by the model on each visit.
 
@@ -36,15 +41,17 @@ app. Each visit generates the page from `features/todos.md`.
 
 - `GET /:feature` reads the app's Markdown (`features/` + `config/`) and asks Claude to generate a
   **structure-only** page; the shell themes it with Pico.css for a consistent look.
+- A feature's `models` are parsed for **entities and relationships**: a child entity that references
+  a parent (e.g. a `Comment` with a `postId`) renders as parent cards with nested child lists.
 - Generated forms POST to `/:feature/_action`; the framework persists the change to **SQLite** and
   uses **Turbo Streams** to update the page in place (no full reload).
 - Pages only expose the **actions a feature's stories declare** (e.g. no delete button unless the
-  feature says "delete a …").
+  feature says "delete a …"). Deletes prompt for confirmation before they run.
 
 ## Project layout
 
 ```
-src/                 # the framework (server, generator, db, rendering)
+src/                 # the framework (server, generator, schema, db, rendering)
 features/            # the app: what it does (Markdown)
 config/              # the app: data store + design choices
 REQUIREMENTS.md  STRUCTURE.md   # docs
