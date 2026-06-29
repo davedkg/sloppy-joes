@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.png" alt="Sloppy Joes logo" width="160">
+</p>
+
 # Sloppy Joes
 
 **A weird experiment that turns Markdown requirements into working web pages at runtime.**
