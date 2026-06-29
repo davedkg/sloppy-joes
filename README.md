@@ -6,12 +6,12 @@ You describe what an app should do in plain Markdown — its features, data, and
 every visit Claude generates the actual page from that description. No hand-written HTML, no build
 step, no templates. (Under the hood it's a small framework; you just never write the pages yourself.)
 
-See [`REQUIREMENTS.md`](./REQUIREMENTS.md) for the concept and [`STRUCTURE.md`](./STRUCTURE.md) for
-how an app's files are organized.
-
 <p align="center">
   <img src="assets/overview.png" alt="Sloppy Joes: write a feature in Markdown, save it, and the page is generated at runtime" width="100%">
 </p>
+
+See [`REQUIREMENTS.md`](./REQUIREMENTS.md) for the concept and [`STRUCTURE.md`](./STRUCTURE.md) for
+how an app's files are organized.
 
 ## Prerequisites
 
