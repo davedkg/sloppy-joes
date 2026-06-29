@@ -1,7 +1,10 @@
 # Sloppy Joes
 
-An AI-powered web framework (prototype). You declare **features** as Markdown requirements, and the
-framework **generates the web pages at runtime** — per visit — instead of you hand-writing them.
+**A weird prototype that turns Markdown requirements into working web pages at runtime.**
+
+You describe what an app should do in plain Markdown — its features, data, and user stories — and on
+every visit Claude generates the actual page from that description. No hand-written HTML, no build
+step, no templates. (Under the hood it's a small framework; you just never write the pages yourself.)
 
 See [`REQUIREMENTS.md`](./REQUIREMENTS.md) for the concept and [`STRUCTURE.md`](./STRUCTURE.md) for
 how an app's files are organized.
